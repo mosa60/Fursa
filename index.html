@@ -1,0 +1,321 @@
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Fursa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <script>
+        let users = JSON.parse(localStorage.getItem('users')) || [];
+        let currentUser = null;
+
+        function togglePasswordVisibility(id, iconId) {
+            var passwordInput = document.getElementById(id);
+            var passwordIcon = document.getElementById(iconId);
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                passwordIcon.classList.remove("fa-eye");
+                passwordIcon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                passwordIcon.classList.remove("fa-eye-slash");
+                passwordIcon.classList.add("fa-eye");
+            }
+        }
+
+        function showRegisterForm() {
+            document.getElementById("login-form").classList.add("hidden");
+            document.getElementById("register-form").classList.remove("hidden");
+        }
+
+        function showLoginForm() {
+            document.getElementById("register-form").classList.add("hidden");
+            document.getElementById("login-form").classList.remove("hidden");
+        }
+
+        function showPackages() {
+            document.getElementById("login-form").classList.add("hidden");
+            document.getElementById("packages").classList.remove("hidden");
+            document.getElementById("account-balance").textContent = `رصيد الحساب: ${currentUser.balance}`;
+        }
+
+        function showLoginFromPackages() {
+            if (confirm("هل تريد تسجيل الخروج؟")) {
+                document.getElementById("packages").classList.add("hidden");
+                document.getElementById("login-form").classList.remove("hidden");
+            }
+        }
+
+        function validateLoginForm() {
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+            var errorMessage = document.getElementById("login-error-message");
+
+            if (email === "" || password === "") {
+                errorMessage.textContent = "يرجى ملء جميع الحقول.";
+                errorMessage.classList.remove("hidden");
+            } else {
+                const user = users.find(user => user.email === email && user.password === password);
+                if (!user) {
+                    errorMessage.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+                    errorMessage.classList.remove("hidden");
+                } else {
+                    errorMessage.classList.add("hidden");
+                    currentUser = user;
+                    showPackages();
+                }
+            }
+        }
+
+        function validateRegisterForm() {
+            var email = document.getElementById("register-email").value;
+            var phone = document.getElementById("phone").value;
+            var password = document.getElementById("register-password").value;
+            var confirmPassword = document.getElementById("confirm-password").value;
+            var errorMessage = document.getElementById("register-error-message");
+
+            if (email === "" || phone === "" || password === "" || confirmPassword === "") {
+                errorMessage.textContent = "يرجى ملء جميع الحقول.";
+                errorMessage.classList.remove("hidden");
+            } else if (phone.length !== 11) {
+                errorMessage.textContent = "رقم الهاتف يجب أن يكون 11 رقم.";
+                errorMessage.classList.remove("hidden");
+            } else if (password !== confirmPassword) {
+                errorMessage.textContent = "كلمات المرور غير متطابقة.";
+                errorMessage.classList.remove("hidden");
+            } else if (users.some(user => user.email === email || user.phone === phone)) {
+                errorMessage.textContent = "البريد الإلكتروني أو رقم الهاتف مستخدم بالفعل.";
+                errorMessage.classList.remove("hidden");
+            } else {
+                errorMessage.classList.add("hidden");
+                users.push({ email, phone, password, balance: 0 });
+                localStorage.setItem('users', JSON.stringify(users));
+                alert("تم التسجيل بنجاح!");
+                showLoginForm();
+            }
+        }
+
+        function showAdminForm() {
+            const adminPassword = prompt("أدخل كلمة المرور للدخول إلى الإدارة:");
+            if (adminPassword === "mosa") {
+                document.getElementById("login-form").classList.add("hidden");
+                document.getElementById("register-form").classList.add("hidden");
+                document.getElementById("admin-form").classList.remove("hidden");
+            } else {
+                alert("كلمة المرور غير صحيحة.");
+            }
+        }
+
+        function showLoginFromAdmin() {
+            document.getElementById("admin-form").classList.add("hidden");
+            document.getElementById("login-form").classList.remove("hidden");
+        }
+
+        function validateAdminForm() {
+            var email = document.getElementById("admin-email").value;
+            var password = document.getElementById("admin-password").value;
+            var newPassword = document.getElementById("new-password").value;
+            var confirmNewPassword = document.getElementById("confirm-new-password").value;
+            var balance = document.getElementById("balance").value;
+            var errorMessage = document.getElementById("admin-error-message");
+
+            if (email === "" || password === "" || newPassword === "" || confirmNewPassword === "" || balance === "") {
+                errorMessage.textContent = "يرجى ملء جميع الحقول.";
+                errorMessage.classList.remove("hidden");
+            } else if (newPassword !== confirmNewPassword) {
+                errorMessage.textContent = "كلمات المرور الجديدة غير متطابقة.";
+                errorMessage.classList.remove("hidden");
+            } else {
+                const user = users.find(user => user.email === email && user.password === password);
+                if (!user) {
+                    errorMessage.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+                    errorMessage.classList.remove("hidden");
+                } else {
+                    user.password = newPassword;
+                    user.balance = parseFloat(balance);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    errorMessage.classList.add("hidden");
+                    alert("تم التسجيل بنجاح!");
+                    showLoginFromAdmin();
+                }
+            }
+        }
+
+        function searchUserByEmail() {
+            var searchEmail = prompt("أدخل البريد الإلكتروني للبحث:");
+            if (searchEmail) {
+                const user = users.find(user => user.email === searchEmail);
+                if (user) {
+                    alert(`تم العثور على المستخدم:\nالبريد الإلكتروني: ${user.email}\nرقم الهاتف: ${user.phone}\nكلمة المرور: ${user.password}\nالرصيد: ${user.balance}`);
+                } else {
+                    alert("لم يتم العثور على مستخدم بهذا البريد الإلكتروني.");
+                }
+            }
+        }
+
+        function addBalance(amount) {
+            if (currentUser) {
+                currentUser.balance += amount;
+                localStorage.setItem('users', JSON.stringify(users));
+                document.getElementById("account-balance").textContent = `رصيد الحساب: ${currentUser.balance}`;
+                alert(`تمت إضافة ${amount} إلى رصيدك. الرصيد الحالي: ${currentUser.balance}`);
+            }
+        }
+    </script>
+</head>
+<body class="bg-blue-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md">
+        <div class="flex justify-center mb-6">
+            <img alt="صورة بحر مع سماء زرقاء" class="rounded-full" height="100" src="https://storage.googleapis.com/a1aa/image/4lEWcTkybHVvmVQ-FZn8n0FkfXKVFnVDQvvgUJ6DJlw.jpg" width="100"/>
+        </div>
+        <div class="flex justify-center mb-6">
+            <h1 class="text-4xl font-bold text-gray-800">Fursa</h1>
+        </div>
+        <form class="bg-blue-200 shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4" id="login-form">
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="email" placeholder="البريد الإلكتروني" type="email"/>
+                    <span class="absolute left-3 text-gray-500">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-6">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline text-right" id="password" placeholder="كلمة المرور" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('password', 'password-icon')">
+                        <i class="fas fa-eye" id="password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="text-red-500 text-sm mb-4 hidden" id="login-error-message"></div>
+            <div class="flex items-center justify-between">
+                <button class="bg-lime-500 hover:bg-lime-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105" onclick="validateLoginForm()" type="button">الدخول</button>
+            </div>
+            <div class="mt-4 text-center">
+                <button class="bg-lime-500 hover:bg-lime-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105" onclick="showRegisterForm()" type="button">
+                    <i class="fas fa-user-plus text-white"></i> تسجيل جديد
+                </button>
+            </div>
+            <div class="mt-4 text-center">
+                <button class="bg-gray-500 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105 text-xs opacity-0" onclick="showAdminForm()" type="button">
+                    <i class="fas fa-lock text-white"></i> إدارة
+                </button>
+            </div>
+        </form>
+        <form class="bg-blue-200 shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4 hidden" id="register-form">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showLoginForm()" type="button">
+                    <i class="fas fa-arrow-right text-gray-500"></i>
+                </button>
+                <h1 class="text-4xl font-bold text-gray-800">تسجيل جديد</h1>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-left" id="register-email" placeholder="البريد الإلكتروني" type="email"/>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <span class="absolute right-3 text-gray-500">
+                        <i class="fas fa-phone"></i> +02
+                    </span>
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-12" id="phone" maxlength="11" placeholder="رقم الهاتف" type="tel"/>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="register-password" placeholder="كلمة المرور" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('register-password', 'register-password-icon')">
+                        <i class="fas fa-eye" id="register-password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-6">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="confirm-password" placeholder="إعادة كلمة المرور" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('confirm-password', 'confirm-password-icon')">
+                        <i class="fas fa-eye" id="confirm-password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="text-red-500 text-sm mb-4 hidden" id="register-error-message"></div>
+            <div class="flex items-center justify-between">
+                <button class="bg-lime-500 hover:bg-lime-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105" onclick="validateRegisterForm()" type="button">تسجيل</button>
+            </div>
+        </form>
+        <form class="bg-blue-200 shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4 hidden" id="admin-form">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showLoginFromAdmin()" type="button">
+                    <i class="fas fa-arrow-right text-gray-500"></i>
+                </button>
+                <i class="fas fa-search text-gray-500 mx-2 cursor-pointer" onclick="searchUserByEmail()"></i>
+                <h1 class="text-4xl font-bold text-gray-800">إدارة</h1>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="admin-email" placeholder="البريد الإلكتروني" type="email"/>
+                    <span class="absolute left-3 text-gray-500">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="admin-password" placeholder="كلمة المرور الحالية" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('admin-password', 'admin-password-icon')">
+                        <i class="fas fa-eye" id="admin-password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="balance" placeholder="إضافة رصيد" type="number"/>
+                    <span class="absolute left-3 text-gray-500">
+                        <i class="fas fa-wallet"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="new-password" placeholder="كلمة المرور الجديدة" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('new-password', 'new-password-icon')">
+                        <i class="fas fa-eye" id="new-password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="mb-4">
+                <div class="relative flex items-center">
+                    <input class="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="confirm-new-password" placeholder="تأكيد كلمة المرور الجديدة" type="password"/>
+                    <span class="absolute left-3 text-gray-500 cursor-pointer" onclick="togglePasswordVisibility('confirm-new-password', 'confirm-new-password-icon')">
+                        <i class="fas fa-eye" id="confirm-new-password-icon"></i>
+                    </span>
+                </div>
+            </div>
+            <div class="text-red-500 text-sm mb-4 hidden" id="admin-error-message"></div>
+            <div class="flex items-center justify-between">
+                <button class="bg-lime-500 hover:bg-lime-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105" onclick="validateAdminForm()" type="button">تأكيد</button>
+            </div>
+        </form>
+        <div class="hidden" id="packages">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showLoginFromPackages()" type="button">
+                    <i class="fas fa-arrow-right text-gray-500"></i>
+                </button>
+                <h1 class="text-4xl font-bold text-gray-800">اختر الباقة</h1>
+            </div>
+            <div class="bg-purple-600 text-white rounded-lg p-4 w-full mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <img alt="Wallet icon" class="w-6 h-6 mr-2" height="24" src="https://storage.googleapis.com/a1aa/image/VtQfHqZRz36qdzICzZfrgTo6_Men7OTNlgGVXMpwk0U.jpg" width="24"/>
+                        <span>رصيد الحساب</span>
+                    </div>
+                    <a class="text-white" href="#">التفاصيل</a>
+                </div>
+                <div class="text-4xl font-bold mb-2">
+                    <span id="account-balance">0</span>
+                    <span class="text-lg">EGP</span>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="bg-white text-purple-600 rounded-lg px-4 py-2">إعادة الشحن</button>
+                    <button class="bg-purple-500 text-white rounded-lg px-4 py-2">سحب</button>
